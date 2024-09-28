@@ -8,6 +8,8 @@
   ffmpeg,
   gtk3,
   lttng-ust_2_12,
+  openssl,
+  gnome3,
   ...
 }:
 
@@ -36,11 +38,12 @@ stdenv.mkDerivation rec {
     ffmpeg
     gtk3
     lttng-ust_2_12
+    openssl # Provide libssl for runtime
+    gnome3.adwaita-icon-theme # Provide common cursor theme from gnome3
   ];
 
   unpackPhase = "true";
 
-  # Extract and copy executable in $out/bin
   # cp -a = copy preserving all attributes, recursively, not following symlinks
   installPhase = ''
     # Extract the deb package into a temporary directory
@@ -82,13 +85,13 @@ stdenv.mkDerivation rec {
     chmod +x $out/xdm-app
     chmod +x $out/share/applications/xdm-app.desktop
 
-    # Wrap the binary to ensure the GTK libraries are found
+    # Wrap the binary to ensure the GTK libraries and libssl are found
     wrapProgram $out/bin/xdman \
-      --prefix LD_LIBRARY_PATH : "${gtk3.out}/lib"
+      --prefix LD_LIBRARY_PATH : "${gtk3.out}/lib:${openssl.out}/lib"
   '';
 
   meta = with lib; {
-    description = "Powerfull download accelerator and video downloader";
+    description = "Powerful download accelerator and video downloader";
     homepage = "https://github.com/subhra74/xdm";
     license = licenses.gpl2Only;
     maintainers = with maintainers; [ ];
