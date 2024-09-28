@@ -4,6 +4,7 @@
   stdenv,
   autoPatchelfHook,
   dpkg,
+  makeWrapper,
   ffmpeg,
   gtk3,
   lttng-ust_2_12,
@@ -26,7 +27,8 @@ stdenv.mkDerivation rec {
   # Required for compilation
   nativeBuildInputs = [
     autoPatchelfHook # Automatically setup the loader, and do the magic
-    dpkg
+    dpkg # Extract the deb package
+    makeWrapper # Create a wrapper around the binary
   ];
 
   # Required at runtime
@@ -79,6 +81,10 @@ stdenv.mkDerivation rec {
     chmod +x $out/bin/xdman
     chmod +x $out/xdm-app
     chmod +x $out/share/applications/xdm-app.desktop
+
+    # Wrap the binary to ensure the GTK libraries are found
+    wrapProgram $out/bin/xdman \
+      --prefix LD_LIBRARY_PATH : "${gtk3.out}/lib"
   '';
 
   meta = with lib; {
