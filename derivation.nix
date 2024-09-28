@@ -42,34 +42,43 @@ stdenv.mkDerivation rec {
   # cp -a = copy preserving all attributes, recursively, not following symlinks
   installPhase = ''
     # Extract the deb package into a temporary directory
-    mkdir -p $TMPDIR
     dpkg-deb --extract $src $TMPDIR
 
+    # Create the output directories
+    mkdir -p $out/bin
+    mkdir -p $out/share/applications/
+    mkdir -p $out/share/icons/hicolor/scalable/apps/
+
+    # Move the binary to $out/bin/
+    cp -av $TMPDIR/usr/bin/xdman $out/bin/
+
+    # Move the desktop file to $out/share/applications/
+    cp -av $TMPDIR/usr/share/applications/xdm-app.desktop $out/share/applications/
+
+    # Move the icon to $out/share/icons/
+    cp -av $TMPDIR/opt/xdman/xdm-logo.svg $out/share/icons/hicolor/scalable/apps/
+
     # Move the extracted files to the output directory
-    mkdir -p $out
     cp -av $TMPDIR/opt/xdman/* $out/
-    cp -av $TMPDIR/usr/bin/xdman $out/
-    cp -av $TMPDIR/usr/share/applications/xdm-app.desktop $out/
 
     # Remove unnecessary directories
-    rm -rf $TMPDIR/opt
-    rm -rf $TMPDIR/usr
+    rm -rf $TMPDIR/*
 
     # Update the script to point to the correct path in the Nix store
-    sed -i "s|/opt/xdman/xdm-app|$out/xdm-app|g" $out/xdman
+    sed -i "s|/opt/xdman/xdm-app|$out/xdm-app|g" $out/bin/xdman
 
-    # Update the paths in the xdm-app.desktop file
-    sed -i "s|/opt/xdman/xdm-app|$out/xdm-app|g" $out/xdm-app.desktop
-    sed -i "s|/opt/xdman/xdm-logo.svg|$out/xdm-logo.svg|g" $out/xdm-app.desktop
+    # Update paths in the .desktop file
+    sed -i "s|/opt/xdman/xdm-app|$out/bin/xdman|g" $out/share/applications/xdm-app.desktop
+    sed -i "s|/opt/xdman/xdm-logo.svg|$out/share/icons/hicolor/scalable/apps/xdm-logo.svg|g" $out/share/applications/xdm-app.desktop
 
     # Set correct permissions (ownership is managed by Nix)
     find $out -type d -exec chmod 755 {} +  # Directories
     find $out -type f -exec chmod 644 {} +  # Regular files
 
     # Ensure binaries are executable
-    chmod +x $out/xdman
+    chmod +x $out/bin/xdman
     chmod +x $out/xdm-app
-    chmod +x $out/xdm-app.desktop
+    chmod +x $out/share/applications/xdm-app.desktop
   '';
 
   meta = with lib; {
@@ -77,7 +86,7 @@ stdenv.mkDerivation rec {
     homepage = "https://github.com/subhra74/xdm";
     license = licenses.gpl2Only;
     maintainers = with maintainers; [ ];
-    mainProgram = "xdm";
+    mainProgram = "xdman";
     platforms = platforms.all;
   };
 }
