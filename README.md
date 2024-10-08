@@ -4,7 +4,39 @@ A nix derivation for [Xtreme Download Manager](https://github.com/subhra74/xdm)
 
 ## Usage
 
-As of now this derivation has not been published on any repository. You can build it locally by running the following command:
+As of now this derivation has not been published on any repository. You'll need to pull the derivation and add it to your configuration like so:
+
+```nix
+{ pkgs, ... }:
+
+let
+  # Remember to update the hash when the version changes
+  # nix flake prefetch --extra-experimental-features 'nix-command flakes' --json github:Diomeh/nix-xdm/<VERSION>
+  xdm = pkgs.fetchFromGitHub {
+    owner = "Diomeh";
+    repo = "nix-xdm";
+    rev = "0.0.1";
+    hash = "sha256-uME0V2thw0ANiqAgFHnSlPWG7Lg3iR1QLkcsFdQ0bT8=";
+  };
+in
+{
+  environment.systemPackages = [
+    (pkgs.callPackage "${xdm}/derivation.nix" { inherit pkgs; })
+  ];
+}
+```
+
+Then rebuild your system derivation
+
+```sh
+sudo nixos-rebuild switch
+```
+
+From then onward `xdman` will be available for your system
+
+### Running locally
+
+You can build it locally by running the following command:
 
 ```bash
 git clone git@github.com:Diomeh/nix-xdm.git
